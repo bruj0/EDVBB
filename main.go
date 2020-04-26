@@ -2,21 +2,21 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"syscall"
-	"time"
-	"unsafe"
 
 	log "github.com/sirupsen/logrus"
 
 	"github.com/BenJuan26/elite"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
 type event struct {
-	Key int `json:"key"`
+	Key string `json:"key"`
 }
 
 var events []event
@@ -41,32 +41,36 @@ type input struct {
 
 func createEvent(w http.ResponseWriter, r *http.Request) {
 	var newEvent event
+	var ok bool
 	reqBody, err := ioutil.ReadAll(r.Body)
 
 	if err != nil {
-		log.Error(w, "Empty body")
-	}
-
-	if err := json.Unmarshal(reqBody, &newEvent); err != nil {
-		log.Errorf("Unmarshal error: %s", string(reqBody))
+		err = fmt.Errorf("createEvent: Empty body, %s", err.Error())
+		log.Errorf(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(err)
 		return
 	}
 
-	events = append(events, newEvent)
-	w.WriteHeader(http.StatusCreated)
+	if err = json.Unmarshal(reqBody, &newEvent); err != nil {
+		err = fmt.Errorf("Unmarshal error: %s", string(reqBody))
+		log.Errorf(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(err)
+		return
+	}
 
 	log.Debugf("Event received: %+v", newEvent)
+	//events = append(events, newEvent)
 
-	SendInput(false)
-	time.Sleep(10 * time.Millisecond)
-	SendInput(true)
-	//kb.SetKeys(newEvent.Key)
-
-	// err = kb.Launching()
-	// if err != nil {
-	// 	panic(err)
-	// }
-
+	if ok, err = SendKeyPress(newEvent.Key); !ok {
+		err = fmt.Errorf("createEvent: SendKeyPress error %s", err.Error())
+		log.Errorf(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(err)
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(newEvent)
 }
 
@@ -74,12 +78,12 @@ func edSystem(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 	system, _ := elite.GetStarSystem()
-
-	if err = json.NewEncoder(w).Encode(system); err != nil {
+	jsonEnc := json.NewEncoder(w)
+	err = jsonEnc.Encode(system)
+	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
 }
 
 func edStatus(w http.ResponseWriter, r *http.Request) {
@@ -98,34 +102,48 @@ func edStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
-func SendInput(up bool) {
-	var i input
-	i.inputType = 1     //INPUT_KEYBOARD
-	i.ki.wScan = 0x041E // virtual key code for a
-	i.ki.wVk = 0x41
-	if up == true {
-		i.ki.dwFlags = 0x0002
-	} else {
-		i.ki.dwFlags = 0
-	}
-	ret, _, err := sendInputProc.Call(
-		uintptr(1),
-		uintptr(unsafe.Pointer(&i)),
-		uintptr(unsafe.Sizeof(i)),
-	)
-	log.Printf("ret: %v error: %v", ret, err)
 
+type StatusRespWr struct {
+	http.ResponseWriter // We embed http.ResponseWriter
+	status              int
 }
+
+func (w *StatusRespWr) WriteHeader(status int) {
+	w.status = status // Store the status for our own use
+	w.ResponseWriter.WriteHeader(status)
+}
+func wrapHandler(h http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		srw := &StatusRespWr{ResponseWriter: w}
+		h.ServeHTTP(srw, r)
+		if srw.status >= 400 { // 400+ codes are the error codes
+			log.Errorf("Error status code: %d when serving path: %s",
+				srw.status, r.RequestURI)
+		}
+	}
+}
+
+const (
+	STATIC_DIR = "/html/"
+	PORT       = "8080"
+)
+
 func main() {
 
 	log.SetOutput(os.Stdout)
 	log.SetFormatter(&log.JSONFormatter{})
 	log.SetLevel(log.DebugLevel)
-	log.Info("Starting remoto v0.2")
+	log.Info("Starting EDVBB v0.2")
 
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/event", createEvent).Methods("POST")
 	router.HandleFunc("/system", edSystem).Methods("GET")
 	router.HandleFunc("/status", edStatus).Methods("GET")
-	log.Fatal(http.ListenAndServe(":8080", router))
+	router.PathPrefix(STATIC_DIR).Handler(
+		http.StripPrefix(
+			STATIC_DIR,
+			handlers.
+				LoggingHandler(os.Stdout, http.
+					FileServer(http.Dir("."+STATIC_DIR)))))
+	log.Fatal(http.ListenAndServe(":"+PORT, router))
 }
