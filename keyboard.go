@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"syscall"
 	"time"
 	"unsafe"
 )
@@ -273,32 +274,51 @@ var ScanKeys = map[string]uint16{
 	"MEDIASELECT":  0x04ED, // (* Media Select *)
 }
 
+// static void dummy(void) { }
+type keyboardInput struct {
+	wVk         uint16
+	wScan       uint16
+	dwFlags     uint32
+	time        uint32
+	dwExtraInfo uint64
+}
+
+type input struct {
+	inputType uint32
+	ki        keyboardInput
+	padding   uint64
+}
+
+var dll = syscall.NewLazyDLL("user32.dll")
+var sendInputProc = dll.NewProc("SendInput")
+var mapVirtualKeyProc = dll.NewProc("MapVirtualKeyA")
+
 // SendKeyPress send key press down, wait and send key release
 func SendKeyPress(Key string) (ok bool, err error) {
 
 	if ok, err := SendInput(false, Key); !ok {
-		return false, fmt.Errorf("%s, Sendkeypress: Error sending key press up", err)
+		return false, fmt.Errorf("%s, Sendkeypress: Error sending key press", err)
 	}
 
 	time.Sleep(10 * time.Millisecond)
 
 	if ok, err := SendInput(true, Key); !ok {
-		return false, fmt.Errorf("%s, Sendkeypress: Error sending key press up", err)
+		return false, fmt.Errorf("%s, Sendkeypress: Error sending key release", err)
 	}
 
 	return true, nil
 
 }
 
-// SendInput send the keypress of the 'key' as down or release
-func SendInput(up bool, key string) (ok bool, err error) {
+// SendInput send the keypress of the 'key' or release
+func SendInput(release bool, key string) (ok bool, err error) {
 	var i input
-	i.inputType = 1            //INPUT_KEYBOARD
-	wScan, ok := ScanKeys[key] //0x041E // virtual key code for a
+	i.inputType = 1 //INPUT_KEYBOARD
+	/*wScan, ok := ScanKeys[key] //0x041E // virtual key code for a
 	if !ok {
 		return false, fmt.Errorf("Sendinput: Wrong ScanKeys specified: %s", key)
 	}
-	i.ki.wScan = wScan
+	i.ki.wScan = wScan*/
 
 	vVk, ok := Vkeys[key]
 
@@ -307,7 +327,11 @@ func SendInput(up bool, key string) (ok bool, err error) {
 		return false, fmt.Errorf("Sendinput: Wrong vKey specified: %s", key)
 	}
 
-	if up == true {
+	wScan, _, _ := mapVirtualKeyProc.Call(uintptr(vVk), uintptr(0))
+
+	i.ki.wScan = uint16(wScan)
+
+	if release == true {
 		i.ki.dwFlags = 0x0002
 	} else {
 		i.ki.dwFlags = 0

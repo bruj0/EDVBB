@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"syscall"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 
@@ -16,28 +16,11 @@ import (
 )
 
 type event struct {
-	Key string `json:"key"`
+	Mod *string `json:"mod,omitempty"`
+	Key string  `json:"key"`
 }
 
 var events []event
-
-var dll = syscall.NewLazyDLL("user32.dll")
-var sendInputProc = dll.NewProc("SendInput")
-
-// static void dummy(void) { }
-type keyboardInput struct {
-	wVk         uint16
-	wScan       uint16
-	dwFlags     uint32
-	time        uint32
-	dwExtraInfo uint64
-}
-
-type input struct {
-	inputType uint32
-	ki        keyboardInput
-	padding   uint64
-}
 
 func createEvent(w http.ResponseWriter, r *http.Request) {
 	var newEvent event
@@ -53,7 +36,7 @@ func createEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = json.Unmarshal(reqBody, &newEvent); err != nil {
-		err = fmt.Errorf("Unmarshal error: %s", string(reqBody))
+		err = fmt.Errorf("Unmarshal error: %s\n%s", err.Error(), string(reqBody))
 		log.Errorf(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(err)
@@ -61,15 +44,45 @@ func createEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Debugf("Event received: %+v", newEvent)
-	//events = append(events, newEvent)
 
-	if ok, err = SendKeyPress(newEvent.Key); !ok {
-		err = fmt.Errorf("createEvent: SendKeyPress error %s", err.Error())
-		log.Errorf(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(err)
-		return
+	if newEvent.Mod == nil { //single keypress
+		if ok, err = SendKeyPress(newEvent.Key); !ok {
+			err = fmt.Errorf("createEvent: SendKeyPress error %s", err.Error())
+			log.Errorf(err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(err)
+			return
+		}
+	} else { // keypress with modified
+		if ok, err = SendInput(false, *newEvent.Mod); !ok {
+			err = fmt.Errorf("createEvent: SendInput error %s", err.Error())
+			log.Errorf(err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(err)
+			return
+		}
+
+		time.Sleep(10 * time.Millisecond)
+
+		if ok, err = SendKeyPress(newEvent.Key); !ok {
+			err = fmt.Errorf("createEvent: SendKeyPress error %s", err.Error())
+			log.Errorf(err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(err)
+			return
+		}
+
+		time.Sleep(10 * time.Millisecond)
+
+		if ok, err = SendInput(true, *newEvent.Mod); !ok {
+			err = fmt.Errorf("createEvent: SendInput error %s", err.Error())
+			log.Errorf(err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(err)
+			return
+		}
 	}
+
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(newEvent)
 }
@@ -96,6 +109,11 @@ func edStatus(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	/*status.Flags.LandingGearDown = true
+	status.Flags.FlightAssistOff = false
+	status.Flags.LightsOn = true
+	status.Flags.CargoScoopDeployed = true*/
+
 	log.Debugf("Status: %+v", status)
 	if err = json.NewEncoder(w).Encode(status); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

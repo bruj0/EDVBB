@@ -11,7 +11,7 @@
     </style>
     <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/maphilight/1.4.0/jquery.maphilight.min.js"></script>
-    <script>
+    <script>       
         window.onload = function() {
             var ImageMap = function(map) {
                     var n,
@@ -59,9 +59,7 @@
                     type: "POST",
                     url: "/event",
                     dataType: "json",
-                    data: JSON.stringify({
-                        'key': keymaps[id]
-                    })
+                    data: JSON.stringify(keymaps[id])
                 });
                 event.preventDefault()
             })
@@ -75,9 +73,7 @@
                     type: "POST",
                     url: "/event",
                     dataType: "json",
-                    data: JSON.stringify({
-                        'key': keymaps[id]
-                    }),
+                    data: JSON.stringify(keymaps[id]),
                     success: function(result) {
                         console.log("Toggling " + id)
                         if (data.alwaysOn == true) {
@@ -92,55 +88,70 @@
             });
         });
 
+        setTimeout(function refresh() {
+            $.ajax({
+                    type: "GET",
+                    url: "/status",
+                    dataType: "json",
+                    success: function(result) {
+                        //console.log(result)
+                        $("#landing_gear").data('maphilight', {alwaysOn: result.FlagsBool.LandingGearDown}).trigger('alwaysOn.maphilight');    
+                        $("#flight_assist").data('maphilight', {alwaysOn: result.FlagsBool.FlightAssistOff}).trigger('alwaysOn.maphilight');
+                        $("#ship_lights").data('maphilight', {alwaysOn: result.FlagsBool.LightsOn}).trigger('alwaysOn.maphilight');
+                        $("#cargo_scoop").data('maphilight', {alwaysOn: result.FlagsBool.CargoScoopDeployed}).trigger('alwaysOn.maphilight'); 
+                    }
+                });
+            setTimeout(refresh,2000)
+        } ,1000)
         var keymaps = {
-            "engine_boost": "A",
-            "enable_shiftdrv": "B",
-            "silent_running": "C",
-            "deploy_heatsink": "D",
-            "sensor_rangeUP": "E",
-            "speed_100": "F",
-            "speed_75": "G",
-            "speed_50": "I",
-            "speed_25": "J",
-            "speed_r100": "F1",
-            "speed_r75": "F2",
-            "speed_r50": "F3",
-            "speed_r25": "HOME",            
-            "forward": "H",
-            "stop": "K",
-            "landing_gear": "M",
-            "flight_assist": "N",
-            "rotation_correct": "O",
-            "ship_lights": "P",
-            "cargo_scoop": "Q",
-            "galaxy_map": "R",
-            "cycle_shipsUP": "S",
-            "reverse": "T",
-            "engine": "U",
-            "weapon": "V",
-            "system": "W",
-            "balance": "X",
-            "shield_cell": "Y",
-            "fire_groupUP":"Z",
-            "deploy_weapon":"NUMPAD0",
-            "highest_threat":"NUMPAD1",
-            "target_ahead":"NUMPAD2",
-            "enemy_targetUP":"NUMPAD3",
-            "quick_comms":"NUMPAD4",
-            "comm_panels":"NUMPAD5",
-            "chaff_launch":"NUMPAD6",
-            "pause_flight":"NUMPAD7",
-            "jettison_cargo":"NUMPAD8",
-            "subsys_targetUP":"NUMPAD9",
-            "mute_mic":"F5",
-            "system_panel":"F6",
-            "sensor_panel":"F7",
-            "target_panel":"F8",
-            "sensor_rangeDOWN":"F9",
-            "cycle_shipsDOWN":"F10",
-            "enemy_targetDOWN":"F11",
-            "fire_groupDOWN":"F12",
-            "subsy_targetDOWN":"F4",
+            "engine_boost": { mod: "SHIFT", key: "A"},
+            "enable_shiftdrv": { key: "B" },
+            "silent_running": { key: "C"},
+            "deploy_heatsink": { key: "D"},
+            "sensor_rangeUP": { key: "E"},
+            "speed_100": { key: "F"},
+            "speed_75": { key: "G"},
+            "speed_50": { key: "I"},
+            "speed_25": { key: "J"},
+            "speed_r100": { key: "F1"},
+            "speed_r75": { key: "F2"},
+            "speed_r50": { key: "F3"},
+            "speed_r25": { key: "HOME"},            
+            "forward": { key: "H"},
+            "stop": { key: "K"},
+            "landing_gear": { key: "M"},
+            "flight_assist": { key: "N"},
+            "rotation_correct": { key: "O"},
+            "ship_lights": { key: "P"},
+            "cargo_scoop": { key: "Q"},
+            "galaxy_map": { key: "R"},
+            "cycle_shipsUP": { key: "S"},
+            "reverse": { key: "T"},
+            "engine": { key: "U"},
+            "weapon": { key: "V"},
+            "system": { key: "W"},
+            "balance": { key: "X"},
+            "shield_cell": { key: "Y"},
+            "fire_groupUP":{ key: "Z"},
+            "deploy_weapon":{ key: "NUMPAD0"},
+            "highest_threat":{ key: "NUMPAD1"},
+            "target_ahead":{ key: "NUMPAD2"},
+            "enemy_targetUP":{ key: "NUMPAD3"},
+            "quick_comms":{ key: "NUMPAD4"},
+            "comm_panels":{ key: "NUMPAD5"},
+            "chaff_launch":{ key: "NUMPAD6"},
+            "pause_flight":{ key: "NUMPAD7"},
+            "jettison_cargo":{ key: "NUMPAD8"},
+            "subsys_targetUP":{ key: "NUMPAD9"},
+            "mute_mic":{ key: "F5"},
+            "system_panel":{ key: "F6"},
+            "sensor_panel":{ key: "F7"},
+            "target_panel":{ key: "F8"},
+            "sensor_rangeDOWN":{ key: "F9"},
+            "cycle_shipsDOWN":{ key: "F10"},
+            "enemy_targetDOWN":{ key: "F11"},
+            "fire_groupDOWN":{ key: "F12"},
+            "subsy_targetDOWN":{ key: "F4"},
 
         }
     </script>
