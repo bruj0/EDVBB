@@ -9,8 +9,9 @@ It will send this key and mofier to the application that currently has focus.
 To be able to create a Virtual button box for use in Elite Dangerous
 
 # How
+* Run EDVBB.exe in a cmd window with administrator priviliges, this is needed because of the keypress simulation.
 
-The UI is meant to be loaded in a tablet or phone
+* Load the UI on your tablet or phone at: http://<you ip>:8080/html/ 
 
 ![gif](https://i.imgur.com/VfKUd8s.gifv)
 
