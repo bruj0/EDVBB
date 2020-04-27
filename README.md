@@ -2,7 +2,7 @@
 
 # What
 
-This is an application for windows that will listen in a port for API calls.
+Consist on a UI that is loaded via a web browser on a Phone or Tablet and a windows application will listen in a port for API calls from the UI.
 
 The `/event` call will send the key and a modifier to the application that currently has focus.
 
@@ -13,8 +13,8 @@ The `/status` call will read the `status.json` file that the game writes and par
 To be able to create a Virtual button box for use in Elite Dangerous
 
 # How
+* Download here: https://github.com/bruj0/EDVBB/archive/v1.0.zip
 * Run EDVBB.exe in a cmd window with administrator priviliges, this is needed because of the keypress simulation (or build your own from the go files).
-
 
 * Load the UI on your tablet or phone at: http://<you ip>:8080/html/ 
 
