@@ -9,7 +9,8 @@ It will send this key and mofier to the application that currently has focus.
 To be able to create a Virtual button box for use in Elite Dangerous
 
 # How
-* Run EDVBB.exe in a cmd window with administrator priviliges, this is needed because of the keypress simulation.
+* Run EDVBB.exe in a cmd window with administrator priviliges, this is needed because of the keypress simulation (or build your own from the go files).
+
 
 * Load the UI on your tablet or phone at: http://<you ip>:8080/html/ 
 
@@ -71,3 +72,6 @@ To change the configuration edit `index.html`
 
         }
 ```        
+
+
+Thanks to NC Sarge for the inserts to create the UI: https://forums.frontier.co.uk/threads/ed-panel-inserts-for-thrustmaster-cougar-pack-mfds.52342/
