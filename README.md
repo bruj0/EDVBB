@@ -13,7 +13,7 @@ To be able to create a Virtual button box for use in Elite Dangerous
 
 * Load the UI on your tablet or phone at: http://<you ip>:8080/html/ 
 
-![gif](VfKUd8s.gifv)
+![gif](VfKUd8s.gif)
 
 
 To change the configuration edit `index.html`
