@@ -1,8 +1,12 @@
 # Elite Dangerous Virtual Button Box
 
 # What
-This is an application for windows that will listen in a port for API calls with a key and a modifier.
-It will send this key and mofier to the application that currently has focus.
+
+This is an application for windows that will listen in a port for API calls.
+
+The `/event` call will send the key and a modifier to the application that currently has focus.
+
+The `/status` call will read the `status.json` file that the game writes and parse it, thanks to BenJuan26 go module for ED.
 
 # Why
 
@@ -73,5 +77,7 @@ To change the configuration edit `index.html`
         }
 ```        
 
+# Credits:
 
-Thanks to NC Sarge for the inserts to create the UI: https://forums.frontier.co.uk/threads/ed-panel-inserts-for-thrustmaster-cougar-pack-mfds.52342/
+* Thanks to NC Sarge for the inserts to create the UI: https://forums.frontier.co.uk/threads/ed-panel-inserts-for-thrustmaster-cougar-pack-mfds.52342/
+* Thanks to BenJuan26 for his ED journal parser: https://github.com/BenJuan26/elite
