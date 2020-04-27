@@ -16,7 +16,7 @@ To be able to create a Virtual button box for use in Elite Dangerous
 * Download here: https://github.com/bruj0/EDVBB/archive/v1.0.zip
 * Run EDVBB.exe in a cmd window with administrator priviliges, this is needed because of the keypress simulation (or build your own from the go files).
 
-* Load the UI on your tablet or phone at: http://<you ip>:8080/html/ 
+* Load the UI on your tablet or phone at: http://localhost:8080/html/ 
 
 ![gif](VfKUd8s.gif)
 
