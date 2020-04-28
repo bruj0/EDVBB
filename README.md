@@ -23,7 +23,7 @@ To be able to create a Virtual button box for use in Elite Dangerous
 
 To change the configuration edit `index.html`
 
-```json
+```js
         var keymaps = {
             "engine_boost": { mod: "SHIFT", key: "A"},
             "enable_shiftdrv": { key: "B" },
